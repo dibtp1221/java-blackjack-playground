@@ -24,3 +24,14 @@ git checkout main // 기본 브랜치가 main인 경우
 git checkout -b 브랜치이름
 ex) git checkout -b apply-feedback
 ```
+
+## 기능 구현 목록
+- 카드숫자(K, Q, J 포함) enum으로 만들기
+- 카드는 클래스로 표현
+- 카드 덱 만들기
+- 랜덤 카드 나눠주기
+- 딜러 클래스, 일반 플레이어 클래스
+- 한 사람이 가진 카드 합계 계산 기능
+- 블랙잭 체크 (처음 두 장의 카드 합이 21)
+- 돌려받는 금액 계산
+- input view, ResultView
