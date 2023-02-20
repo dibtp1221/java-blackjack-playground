@@ -1,0 +1,45 @@
+package nextstep.blackjack.player;
+
+import nextstep.blackjack.card.Card;
+import nextstep.blackjack.card.CardNumber;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+public class Dealer {
+
+    private final List<Card> cards = new ArrayList<>();
+
+    public void addCard(Card card) {
+        this.cards.add(card);
+    }
+
+    public int countTotal() {
+        int ace1 = cards.stream().map(Card::getNumber).reduce(0, Integer::sum);
+        AtomicInteger ace11 = new AtomicInteger(ace1);
+        if (cards.stream().anyMatch(card -> card.getCardNumber() == CardNumber.A)) {
+            cards.stream()
+                    .filter(card -> card.getCardNumber() == CardNumber.A)
+                    .forEach(card -> {
+                        if (ace11.get() <= 11) {
+                            ace11.addAndGet(10);
+                        }
+                    });
+        }
+
+        return ace11.get();
+    }
+
+    public boolean isBlackJack() {
+        return diffWith21() == 0;
+    }
+
+    public int diffWith21() {
+        return Math.abs(21 - countTotal());
+    }
+    public String showCards() {
+        return cards.stream().map(Card::toString).collect(Collectors.joining(", "));
+    }
+}
