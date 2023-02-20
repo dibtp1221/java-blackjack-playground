@@ -21,6 +21,11 @@ public class Card {
     }
 
     @Override
+    public String toString() {
+        return (cardNumber.isNamePresents() ? cardNumber.name() : cardNumber.getValue()) + shape.getName();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
