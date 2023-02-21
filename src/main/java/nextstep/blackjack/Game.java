@@ -1,10 +1,8 @@
 package nextstep.blackjack;
 
 import nextstep.blackjack.card.CardDeck;
-import nextstep.blackjack.player.Dealer;
 import nextstep.blackjack.player.Player;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -12,17 +10,87 @@ import java.util.stream.Collectors;
 
 public class Game {
 
-    private static final InputView inputView = new InputView();
-    private static final ResultView resultView = new ResultView();
-
+    static CardDeck cardDeck = new CardDeck();
 
     public static void main(String[] args) {
-        List<Player> players = inputView.inputPlayers();
-        Dealer dealer = new Dealer();
+        List<Player> players = InputView.inputPlayers();
+        Player dealer = new Player("딜러", 0);
         AtomicInteger dealerMoney = new AtomicInteger();
 
-        CardDeck cardDeck = new CardDeck();
+        initialSet(players, dealer);
 
+        if (players.stream().anyMatch(Player::isBlackJack)) {
+            whenBlackJack(players, dealer, dealerMoney);
+            ResultView.finalResult(dealerMoney.get(), players);
+            return;
+        }
+
+        givePlayersAddtCard(players, dealerMoney);
+
+        giveDealerAddtCard(dealer);
+
+        List<Player> notLosts = players.stream().filter(Player::isNotOver21).collect(Collectors.toList());
+
+        if (dealer.countTotal() > 21) {
+            whenDealerIsOver21(dealerMoney, notLosts);
+            ResultView.finalResult(dealerMoney.get(), players);
+            return;
+        }
+
+        findWinnerBtnRemains(dealerMoney, notLosts);
+
+        ResultView.finalResult(dealerMoney.get(), players);
+    }
+
+    private static void findWinnerBtnRemains(AtomicInteger dealerMoney, List<Player> notLosts) {
+        notLosts.forEach(player -> System.out.println(player.showCards()));
+
+        notLosts.sort(Comparator.comparingInt(Player::countTotal));
+
+        Player winner = notLosts.get(0);
+        dealerMoney.getAndAdd(-1 * winner.getBettingAmt());
+        winner.setRevenue(winner.getBettingAmt());
+
+        notLosts.remove(1);
+
+        notLosts.forEach(player -> loseMoneyToDealer(dealerMoney, player));
+    }
+
+    private static void whenDealerIsOver21(AtomicInteger dealerMoney, List<Player> notLost) {
+        notLost.forEach(player -> {
+                    player.setRevenue(player.getBettingAmt());
+                    dealerMoney.getAndAdd(-1 * player.getBettingAmt());
+                });
+    }
+
+    private static void givePlayersAddtCard(List<Player> players, AtomicInteger dealerMoney) {
+        players.forEach(player -> {
+            while (InputView.wantMoreCard(player)) {
+                player.addCard(cardDeck.getRandomCard());
+                System.out.println(player.showCards());
+                if (player.isOver21()) {
+                    System.out.println("21 초과했습니다. 베팅금액을 잃었습니다.");
+                    loseMoneyToDealer(dealerMoney, player);
+                    break;
+                }
+            }
+        });
+    }
+
+    private static void loseMoneyToDealer(AtomicInteger dealerMoney, Player player) {
+        player.setRevenue(-1 * player.getBettingAmt());
+        dealerMoney.getAndAdd(player.getBettingAmt());
+    }
+
+    private static void giveDealerAddtCard(Player dealer) {
+        if (dealer.countTotal() < 17) {
+            System.out.println("딜러는 16이하라 한장의 카드를 더 받았습니다.");
+            dealer.addCard(cardDeck.getRandomCard());
+            System.out.println(dealer.showCards());
+        }
+    }
+
+    private static void initialSet(List<Player> players, Player dealer) {
         dealer.addCard(cardDeck.getRandomCard());
         dealer.addCard(cardDeck.getRandomCard());
 
@@ -34,82 +102,12 @@ public class Game {
         String collectedNames = players.stream().map(Player::getName).collect(Collectors.joining(", "));
         System.out.println("딜러와 " + collectedNames + " 에게 2장의 카드를 나누었습니다.");
 
-        System.out.println("딜러: "+dealer.showCards());
+        System.out.println(dealer.showCards());
         players.forEach(player -> System.out.println(player.showCards()));
-
-        if (players.stream().anyMatch(Player::isBlackJack)) {
-            whenBlackJack(players, dealer, dealerMoney);
-            resultView.finalResult(dealerMoney.get(), players);
-            return;
-        }
-
-        players.forEach(player -> {
-            while (inputView.wantMoreCard(player)) {
-                player.addCard(cardDeck.getRandomCard());
-                System.out.println(player.showCards());
-                if (player.isOver21()) {
-                    System.out.println("21 초과했습니다. 베팅금액을 잃었습니다.");
-                    player.setRevenue(-1 * player.getBettingAmt());
-                    dealerMoney.getAndAdd(player.getBettingAmt());
-                    break;
-                }
-            }
-        });
-
-        if (dealer.countTotal() < 17) {
-            System.out.println("딜러는 16이하라 한장의 카드를 더 받았습니다.");
-            dealer.addCard(cardDeck.getRandomCard());
-            System.out.println("딜러: "+dealer.showCards());
-        }
-
-        List<Player> notLost = players.stream().filter(Player::isNotOver21).collect(Collectors.toList());
-
-        if (dealer.countTotal() > 21) {
-            notLost.forEach(player -> {
-                        player.setRevenue(player.getBettingAmt());
-                        dealerMoney.getAndAdd(-1 * player.getBettingAmt());
-                    });
-            resultView.finalResult(dealerMoney.get(), players);
-            return;
-        }
-
-        System.out.println("딜러: "+dealer.showCards());
-        notLost.forEach(player -> System.out.println(player.showCards()));
-
-        notLost.sort(Comparator.comparingInt(Player::countTotal));
-
-        Player winner = notLost.get(0);
-        dealerMoney.getAndAdd(-1 * winner.getBettingAmt());
-        winner.setRevenue(winner.getBettingAmt());
-
-        notLost.remove(1);
-
-        notLost.forEach(player -> {
-            player.setRevenue(-1 * player.getBettingAmt());
-            dealerMoney.getAndAdd(player.getBettingAmt());
-        });
-
-        resultView.finalResult(dealerMoney.get(), players);
     }
 
-    private static void whenBlackJack(List<Player> players, Dealer dealer, AtomicInteger dealerMoney) {
-        players.stream().filter(player -> !player.isBlackJack()).forEach(player -> {
-            dealerMoney.addAndGet(player.getBettingAmt());
-            player.setRevenue(-1 * player.getBettingAmt());
-        });
+    private static void whenBlackJack(List<Player> players, Player dealer, AtomicInteger dealerMoney) {
 
-        if (dealer.isBlackJack()) {
-            players.stream().filter(Player::isBlackJack).forEach(player -> player.setRevenue(0));
-        } else {
-            players.stream().filter(Player::isBlackJack).forEach(player -> {
-                int prize = (int) (1.5 * player.getBettingAmt());
-                player.setRevenue(prize);
-                dealerMoney.addAndGet(-1 * prize);
-            });
-        }
-    }
-
-    private static void whenOver21(List<Player> players, Dealer dealer, AtomicInteger dealerMoney) {
         players.stream().filter(player -> !player.isBlackJack()).forEach(player -> {
             dealerMoney.addAndGet(player.getBettingAmt());
             player.setRevenue(-1 * player.getBettingAmt());

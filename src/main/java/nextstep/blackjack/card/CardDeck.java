@@ -10,7 +10,9 @@ public class CardDeck {
     private final Random random = new Random();
 
     public CardDeck() {
-        cards = Arrays.stream(Shape.values()).flatMap(shape -> Arrays.stream(CardNumber.values()).map(cardNumber -> new Card(cardNumber, shape))).collect(Collectors.toCollection(LinkedList::new));
+        cards = Arrays.stream(Shape.values())
+                .flatMap(shape -> Arrays.stream(CardNumber.values())
+                        .map(cardNumber -> new Card(cardNumber, shape))).collect(Collectors.toCollection(LinkedList::new));
     }
 
     public Card getRandomCard() {
