@@ -40,6 +40,9 @@ public class Player {
         return ace11.get();
     }
 
+    public boolean isNotOver21() {
+        return countTotal() <= 21;
+    }
     public boolean isOver21() {
         return countTotal() > 21;
     }

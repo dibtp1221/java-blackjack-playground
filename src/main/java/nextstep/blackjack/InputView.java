@@ -22,6 +22,7 @@ public class InputView {
             players.add(new Player(name, scanner.nextInt()));
         });
 
+        scanner.nextLine();
         return players;
     }
 

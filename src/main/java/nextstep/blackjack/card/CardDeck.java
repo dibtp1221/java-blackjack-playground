@@ -15,7 +15,7 @@ public class CardDeck {
 
     public Card getRandomCard() {
         int idx = random.nextInt(cards.size());
-        return cards.get(idx);
+        return cards.remove(idx);
     }
 
     public List<Card> getCards() {
