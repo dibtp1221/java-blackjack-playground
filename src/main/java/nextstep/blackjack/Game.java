@@ -37,23 +37,23 @@ public class Game {
             return;
         }
 
+        notLosts.add(dealer);
         findWinnerBtnRemains(dealerMoney, notLosts);
 
         ResultView.finalResult(dealerMoney.get(), players);
     }
 
-    private static void findWinnerBtnRemains(AtomicInteger dealerMoney, List<Player> notLosts) {
+    public static void findWinnerBtnRemains(AtomicInteger dealerMoney, List<Player> notLosts) {
         notLosts.forEach(player -> System.out.println(player.showCards()));
 
-        notLosts.sort(Comparator.comparingInt(Player::countTotal));
+        notLosts.sort(Comparator.comparingInt(Player::countTotal).reversed());
 
         Player winner = notLosts.get(0);
-        dealerMoney.getAndAdd(-1 * winner.getBettingAmt());
+        dealerMoney.addAndGet(-1 * winner.getBettingAmt());
         winner.setRevenue(winner.getBettingAmt());
 
-        notLosts.remove(1);
-
-        notLosts.forEach(player -> loseMoneyToDealer(dealerMoney, player));
+        notLosts.remove(0);
+        notLosts.stream().filter(player -> !"딜러".equals(player.getName())).forEach(player -> loseMoneyToDealer(dealerMoney, player));
     }
 
     private static void whenDealerIsOver21(AtomicInteger dealerMoney, List<Player> notLost) {
@@ -79,7 +79,7 @@ public class Game {
 
     private static void loseMoneyToDealer(AtomicInteger dealerMoney, Player player) {
         player.setRevenue(-1 * player.getBettingAmt());
-        dealerMoney.getAndAdd(player.getBettingAmt());
+        dealerMoney.addAndGet(player.getBettingAmt());
     }
 
     private static void giveDealerAddtCard(Player dealer) {
